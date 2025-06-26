@@ -2,3 +2,4 @@ active.ps1
 prova.py
 syn_resized_gt/*
 syn_resized_images/*
+.DS_Store
