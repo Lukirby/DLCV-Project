@@ -4,3 +4,4 @@ syn_resized_gt/*
 syn_resized_images/*
 models/*
 .DS_Store
+cityscapes/*
