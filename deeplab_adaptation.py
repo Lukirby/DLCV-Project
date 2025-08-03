@@ -396,9 +396,51 @@ def domain_adaptation(
     # Track best validation IoU for saving best model
     best_source_val_iou = 0.0
     best_target_val_iou = 0.0
+    
+    # Check if we need to resume from a checkpoint
+    if start_epoch > 0:
+        checkpoint_path = f"models/{name}_epoch_{start_epoch}.pth"
+        if os.path.exists(checkpoint_path):
+            print(f"Loading checkpoint from: {checkpoint_path}")
+            checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
+            
+            # Load model and optimizer state
+            model.load_state_dict(checkpoint["model_state_dict"])
+            optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+            
+            # Load metrics history
+            st_losses = checkpoint.get("st_losses", [])
+            st_ious = checkpoint.get("st_ious", [])
+            tt_losses = checkpoint.get("tt_losses", [])
+            sv_losses = checkpoint.get("sv_losses", [])
+            sv_ious = checkpoint.get("sv_ious", [])
+            tv_ious = checkpoint.get("tv_ious", [])
+            
+            print(f"Resumed from epoch {start_epoch}")
+            print(f"Last metrics - Source Val IoU: {sv_ious[-1] if sv_ious else 'N/A':.4f}, Target Val IoU: {tv_ious[-1] if tv_ious else 'N/A':.4f}")
+            
+            del checkpoint
+        else:
+            print(f"Warning: Checkpoint {checkpoint_path} not found. Starting from scratch.")
+    
+    # Load best validation IoUs from best model checkpoints
+    best_source_checkpoint_path = f"models/{name}_best_unsupervised_model.pth"
+    best_target_checkpoint_path = f"models/{name}_best_supervised_model.pth"
+    
+    if os.path.exists(best_source_checkpoint_path):
+        best_source_checkpoint = torch.load(best_source_checkpoint_path, map_location=DEVICE)
+        best_source_val_iou = best_source_checkpoint.get("source_val_avg_iou", 0.0)
+        print(f"Loaded best source validation IoU: {best_source_val_iou:.4f}")
+        del best_source_checkpoint
+    
+    if os.path.exists(best_target_checkpoint_path):
+        best_target_checkpoint = torch.load(best_target_checkpoint_path, map_location=DEVICE)
+        best_target_val_iou = best_target_checkpoint.get("target_val_avg_iou", 0.0)
+        print(f"Loaded best target validation IoU: {best_target_val_iou:.4f}")
+        del best_target_checkpoint
+    
     start = time.time()
-
-    set_seeds(seed)
+    set_seeds(seed+start_epoch)
     
     for epoch in range(start_epoch, end_epoch):
         print(f"Epoch {epoch+1}/{end_epoch}")
@@ -689,7 +731,7 @@ def main():
 
     # Model name for saving
     name = "DA_deeplabv3_imagenet1k"
-    
+
     model = create_model(
         num_classes=NUM_CLASSES, 
         device=DEVICE, 
