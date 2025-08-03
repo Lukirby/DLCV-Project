@@ -5,4 +5,3 @@ syn_resized_images/*
 models/*
 .DS_Store
 cityscapes/*
-deeplab_adaptation.py
