@@ -299,7 +299,8 @@ def train_and_validate_epoch(
         cls_loss = criterion(source_output, source_labels)
         mmd_loss = MMD_loss_ignore_index(source_embeddings, target_embeddings)
 
-        loss = cls_loss + mmd_weight * mmd_loss
+        #loss = cls_loss + mmd_weight * mmd_loss
+        loss = (1 - mmd_weight) * cls_loss + mmd_weight * mmd_loss
 
         loss.backward()
         optimizer.step()
@@ -398,7 +399,10 @@ def domain_adaptation(
     best_target_val_iou = 0.0
     
     # Check if we need to resume from a checkpoint
+    resume_epoch = start_epoch
+    
     if start_epoch > 0:
+        # Load checkpoint from the specified start_epoch
         checkpoint_path = f"models/{name}_epoch_{start_epoch}.pth"
         if os.path.exists(checkpoint_path):
             print(f"Loading checkpoint from: {checkpoint_path}")
@@ -421,7 +425,9 @@ def domain_adaptation(
             
             del checkpoint
         else:
-            print(f"Warning: Checkpoint {checkpoint_path} not found. Starting from scratch.")
+            print(f"Warning: Checkpoint {checkpoint_path} not found. Starting training from scratch.")
+    else:
+        print(f"Starting training from scratch (start_epoch = 0).")
     
     # Load best validation IoUs from best model checkpoints
     best_source_checkpoint_path = f"models/{name}_best_unsupervised_model.pth"
@@ -440,9 +446,9 @@ def domain_adaptation(
         del best_target_checkpoint
     
     start = time.time()
-    set_seeds(seed+start_epoch)
+    set_seeds(seed+resume_epoch)
     
-    for epoch in range(start_epoch, end_epoch):
+    for epoch in range(resume_epoch, end_epoch):
         print(f"Epoch {epoch+1}/{end_epoch}")
         
         # Train and validate in one go
@@ -703,7 +709,8 @@ def main():
     NUM_CLASSES = 19
     LR = 1e-4
     BATCH_SIZE = 4
-    EPOCHS = 5
+    start_epoch = 5
+    end_epochs = 10  # Epochs to end train
     MMD_WEIGHT = 0.1
     CE_IMPORTANCE = 0.7
     
@@ -727,7 +734,8 @@ def main():
     
     # Create model
     print("Creating model...")
-    best_model_path = "models/deeplabv3_imagenet1k_best_model.pth"
+    # Set to None to start fresh, or specify a path to load a specific model
+    best_model_path = None  # "models/deeplabv3_imagenet1k_best_model.pth"
 
     # Model name for saving
     name = "DA_deeplabv3_imagenet1k"
@@ -735,7 +743,7 @@ def main():
     model = create_model(
         num_classes=NUM_CLASSES, 
         device=DEVICE, 
-        pretrained_path=best_model_path if os.path.exists(best_model_path) else None
+        pretrained_path=best_model_path if best_model_path and os.path.exists(best_model_path) else None
     )
     
     # Create optimizer and criterion
@@ -746,8 +754,8 @@ def main():
     # Run domain adaptation
     print("Starting domain adaptation training...")
     domain_adaptation(
-        start_epoch=0, 
-        end_epoch=EPOCHS,
+        start_epoch=start_epoch,  # Load checkpoint from epoch 5
+        end_epoch=end_epochs,  # Train until epoch 10
         model=model,
         name=name, 
         optimizer=optimizer, 
