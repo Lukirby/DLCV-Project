@@ -713,7 +713,7 @@ def main():
     BATCH_SIZE = 4
     start_epoch = 0
     end_epochs = 5  # Epochs to end train
-    MMD_WEIGHT = 0.2
+    MMD_WEIGHT = 0.05
     CE_IMPORTANCE = 0.7
     
     # Set device
@@ -740,7 +740,7 @@ def main():
     best_model_path = "models/deeplabv3_imagenet1k_best_model.pth"
 
     # Model name for saving
-    name = "DA_highermmd_deeplabv3_imagenet1k"
+    name = "DA_lowermmd_deeplabv3_imagenet1k"
 
     model = create_model(
         num_classes=NUM_CLASSES, 
