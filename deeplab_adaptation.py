@@ -299,9 +299,8 @@ def train_and_validate_epoch(
         cls_loss = criterion(source_output, source_labels)
         mmd_loss = MMD_loss_ignore_index(source_embeddings, target_embeddings)
 
-        #loss = cls_loss + mmd_weight * mmd_loss
-        loss = (1 - mmd_weight) * cls_loss + mmd_weight * mmd_loss
-
+        loss = cls_loss + mmd_weight * mmd_loss
+        
         loss.backward()
         optimizer.step()
 
