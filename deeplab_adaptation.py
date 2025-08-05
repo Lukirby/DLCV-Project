@@ -329,6 +329,8 @@ def train_and_validate_epoch(
     source_train_avg_loss = train_total_loss / steps
     source_train_avg_iou = train_iou_source / steps
     target_train_avg_iou = train_iou_target / steps
+
+    train_avg_mmd_loss = train_mmd_loss / steps
     
     # Validation 
     model.eval()
@@ -369,7 +371,8 @@ def train_and_validate_epoch(
     source_val_avg_loss = val_total_loss / val_steps
     source_val_avg_iou = val_iou_source / val_steps
     target_val_avg_iou = val_iou_target / val_steps
-    
+
+    print(f"The average mmd loss is {train_avg_mmd_loss:.4f}")
     return source_train_avg_loss, source_train_avg_iou, target_train_avg_iou, \
             source_val_avg_loss, source_val_avg_iou, target_val_avg_iou
 
@@ -710,7 +713,7 @@ def main():
     BATCH_SIZE = 4
     start_epoch = 5
     end_epochs = 10  # Epochs to end train
-    MMD_WEIGHT = 0.1
+    MMD_WEIGHT = 0.2
     CE_IMPORTANCE = 0.7
     
     # Set device
@@ -734,10 +737,10 @@ def main():
     # Create model
     print("Creating model...")
     # Set to None to start fresh, or specify a path to load a specific model
-    best_model_path = None  # "models/deeplabv3_imagenet1k_best_model.pth"
+    best_model_path = "models/deeplabv3_imagenet1k_best_model.pth"
 
     # Model name for saving
-    name = "DA_deeplabv3_imagenet1k"
+    name = "DA_highermmd_deeplabv3_imagenet1k"
 
     model = create_model(
         num_classes=NUM_CLASSES, 
@@ -753,8 +756,8 @@ def main():
     # Run domain adaptation
     print("Starting domain adaptation training...")
     domain_adaptation(
-        start_epoch=start_epoch,  # Load checkpoint from epoch 5
-        end_epoch=end_epochs,  # Train until epoch 10
+        start_epoch=start_epoch,  
+        end_epoch=end_epochs,  
         model=model,
         name=name, 
         optimizer=optimizer, 
