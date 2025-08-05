@@ -711,8 +711,8 @@ def main():
     NUM_CLASSES = 19
     LR = 1e-4
     BATCH_SIZE = 4
-    start_epoch = 5
-    end_epochs = 10  # Epochs to end train
+    start_epoch = 0
+    end_epochs = 5  # Epochs to end train
     MMD_WEIGHT = 0.2
     CE_IMPORTANCE = 0.7
     
