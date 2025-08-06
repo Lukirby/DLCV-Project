@@ -287,9 +287,8 @@ def train_and_validate_epoch(
         source_backbone_out = model.backbone(source_data)
         source_embeddings = source_backbone_out['out']
 
-        with torch.no_grad():
-            target_backbone_out = model.backbone(target_data)
-            target_embeddings = target_backbone_out['out']
+        target_backbone_out = model.backbone(target_data)
+        target_embeddings = target_backbone_out['out']
 
         target_embeddings.requires_grad = True
 
@@ -297,7 +296,7 @@ def train_and_validate_epoch(
         target_output = model(target_data)['out']
 
         cls_loss = criterion(source_output, source_labels)
-        mmd_loss = MMD_loss_ignore_index(source_embeddings, target_embeddings)
+        mmd_loss = MMD_loss(source_embeddings, target_embeddings)
 
         loss = cls_loss + mmd_weight * mmd_loss
         
@@ -341,9 +340,13 @@ def train_and_validate_epoch(
     val_steps = min(len(syn_val_dataloader), len(real_val_dataloader))
     
     with torch.no_grad():
+
+        syn_val_iter = iter(syn_val_dataloader)
+        real_val_iter = iter(real_val_dataloader)
+
         for i in tqdm(range(val_steps), desc="Validation"):
-            source_data, source_labels = next(iter(syn_val_dataloader))
-            target_data, target_labels = next(iter(real_val_dataloader))
+            source_data, source_labels = next(syn_val_iter)
+            target_data, target_labels = next(real_val_iter)
             source_data, source_labels = source_data.to(device), source_labels.to(device)
             target_data, target_labels = target_data.to(device), target_labels.to(device)
 
@@ -711,9 +714,9 @@ def main():
     NUM_CLASSES = 19
     LR = 1e-4
     BATCH_SIZE = 4
-    start_epoch = 5
-    end_epochs = 10  # Epochs to end train
-    MMD_WEIGHT = 0.05
+    start_epoch = 0
+    end_epochs = 5  # Epochs to end train
+    MMD_WEIGHT = 0.1
     CE_IMPORTANCE = 0.7
     
     # Set device
@@ -740,7 +743,7 @@ def main():
     best_model_path = "models/deeplabv3_imagenet1k_best_model.pth"
 
     # Model name for saving
-    name = "DA_lowermmd_deeplabv3_imagenet1k"
+    name = "DA_deeplabv3_imagenet1k"
 
     model = create_model(
         num_classes=NUM_CLASSES, 
