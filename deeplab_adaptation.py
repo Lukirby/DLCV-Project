@@ -290,8 +290,6 @@ def train_and_validate_epoch(
         target_backbone_out = model.backbone(target_data)
         target_embeddings = target_backbone_out['out']
 
-        target_embeddings.requires_grad = True
-
         source_output = model(source_data)['out']
         target_output = model(target_data)['out']
 
