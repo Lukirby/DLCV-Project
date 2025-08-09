@@ -1,6 +1,7 @@
 active.ps1
 prova.py
 prova.md
+template.md
 syn_resized_gt/*
 syn_resized_images/*
 models/*

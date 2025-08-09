@@ -192,7 +192,10 @@ def no_ssl_verification():
 
 def cityscapes_mask_to_train_ids(mask):
     mask_np = np.array(mask)
-    mask_np = np.where(mask_np <= 18, mask_np, 255).astype(np.uint8)
+    labels_mapping = {label.id: label.trainId for label in labels.labels if label.trainId != -1}
+    labels_mapping[-1] = 255  # Map invalid labels to 255
+    mask_np = np.vectorize(labels_mapping.get)(mask_np)
+    mask_np = np.where(mask_np <= 18, mask_np, 255).astype(np.uint8)  # Ensure that all pixels are within the range of train IDs
     return torch.from_numpy(mask_np).long()
 
 
@@ -712,9 +715,9 @@ def main():
     NUM_CLASSES = 19
     LR = 1e-4
     BATCH_SIZE = 4
-    start_epoch = 5
-    end_epochs = 10  # Epochs to end train
-    MMD_WEIGHT = 0.05
+    start_epoch = 0
+    end_epochs = 5  # Epochs to end train
+    MMD_WEIGHT = 0.1
     CE_IMPORTANCE = 0.7
     
     # Set device
@@ -741,7 +744,7 @@ def main():
     best_model_path = "models/deeplabv3_imagenet1k_best_model.pth"
 
     # Model name for saving
-    name = "DA_lowerMMD_deeplabv3_imagenet1k"
+    name = "DA_deeplabv3_imagenet1k"
 
     model = create_model(
         num_classes=NUM_CLASSES, 
