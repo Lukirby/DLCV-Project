@@ -304,14 +304,14 @@ def train_and_validate_epoch_multilevel_mmd(
         cls_loss = criterion(source_output, source_labels)
         
         # Dimensionality reduction using Global Average Pooling
-        # Backbone: [B, 2048, H/8, W/8] -> [B, 2048, 2, 2]
-        source_backbone_reduced = F.adaptive_avg_pool2d(source_embeddings, (2, 2)).view(source_embeddings.size(0), -1)
-        target_backbone_reduced = F.adaptive_avg_pool2d(target_embeddings, (2, 2)).view(target_embeddings.size(0), -1)
+        # Backbone: [B, 2048, H/8, W/8] -> [B, 2048]
+        source_backbone_reduced = F.adaptive_avg_pool2d(source_embeddings, (1,1)).view(source_embeddings.size(0), -1)
+        target_backbone_reduced = F.adaptive_avg_pool2d(target_embeddings, (1,1)).view(target_embeddings.size(0), -1)
         backbone_mmd_loss = MMD_loss(source_backbone_reduced, target_backbone_reduced)
 
-        # ASPP: [B, 256, H/8, W/8] -> [B, 256, 2, 2]
-        source_aspp_reduced = F.adaptive_avg_pool2d(source_aspp_features, (2, 2)).view(source_aspp_features.size(0), -1)
-        target_aspp_reduced = F.adaptive_avg_pool2d(target_aspp_features, (2, 2)).view(target_aspp_features.size(0), -1)
+        # ASPP: [B, 256, H/8, W/8] -> [B, 256]
+        source_aspp_reduced = F.adaptive_avg_pool2d(source_aspp_features, (1,1)).view(source_aspp_features.size(0), -1)
+        target_aspp_reduced = F.adaptive_avg_pool2d(target_aspp_features, (1,1)).view(target_aspp_features.size(0), -1)
         aspp_mmd_loss = MMD_loss(source_aspp_reduced, target_aspp_reduced)
         
         # Combine MMD losses with weights that sum to mmd_weight
@@ -739,9 +739,9 @@ def main():
     NUM_CLASSES = 19
     LR = 1e-4
     BATCH_SIZE = 4
-    start_epoch = 0
-    end_epochs = 5  # Epochs to end train
-    MMD_WEIGHT = 0.05
+    start_epoch = 5
+    end_epochs = 10  # Epochs to end train
+    MMD_WEIGHT = 0.01
     CE_IMPORTANCE = 0.7
     
     # Set device
@@ -768,7 +768,7 @@ def main():
     best_model_path = "models/deeplabv3_imagenet1k_best_model.pth"
 
     # Model name for saving
-    name = "DA_lowerMMD_deeplabv3_imagenet1k_multilevelmmd"
+    name = "DA_minMMD_deeplabv3_imagenet1k_multilevelmmd"
 
     model = create_model(
         num_classes=NUM_CLASSES, 
